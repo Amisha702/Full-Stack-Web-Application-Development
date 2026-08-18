@@ -99,7 +99,7 @@ function LoginPage() {
         </form>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Credentials are verified by the Express API at POST /api/auth/login.
+          Credentials are verified
         </p>
       </div>
     </main>
