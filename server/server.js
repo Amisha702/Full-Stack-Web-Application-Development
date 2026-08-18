@@ -4,7 +4,8 @@ const path = require('path');
 
 require('dotenv').config();
 
-const { sequelize } = require('./models');
+const bcrypt = require('bcryptjs');
+const { sequelize, User } = require('./models');
 
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
@@ -46,14 +47,38 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-sequelize
-  .sync()
-  .then(() => {
+async function startServer() {
+  try {
+    await sequelize.sync();
+
+    // Create default admin account if it does not already exist
+    const username = 'admin';
+    const password = 'Admin123!';
+
+    const existingUser = await User.findOne({
+      where: { username }
+    });
+
+    if (!existingUser) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await User.create({
+        username,
+        password: hashedPassword
+      });
+
+      console.log('Default admin user created.');
+    } else {
+      console.log('Admin user already exists.');
+    }
+
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
     });
-  })
-  .catch((err) => {
-    console.error('Database connection failed:', err);
+  } catch (error) {
+    console.error('Failed to start server:', error);
     process.exit(1);
-  });
+  }
+}
+
+startServer();
