@@ -1,7 +1,9 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+
+require('dotenv').config();
+
 const { sequelize } = require('./models');
 
 const authRoutes = require('./routes/authRoutes');
@@ -11,9 +13,18 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:8080' }));
+app.use(
+  cors({
+    origin: process.env.CLIENT_ORIGIN || 'http://localhost:8080',
+  })
+);
+
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+const uploadDir =
+  process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
+
+app.use('/uploads', express.static(uploadDir));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -25,14 +36,24 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found.' });
 });
 
-// Central error handler (e.g. multer file-type/size errors)
+// Central error handler
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(400).json({ message: err.message || 'Something went wrong.' });
+  res.status(400).json({
+    message: err.message || 'Something went wrong.',
+  });
 });
 
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync().then(() => {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-});
+sequelize
+  .sync()
+  .then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Database connection failed:', err);
+    process.exit(1);
+  });
