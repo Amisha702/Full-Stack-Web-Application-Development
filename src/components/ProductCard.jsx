@@ -6,21 +6,24 @@ export function LowStockBadge({ stock }) {
 }
 
 export function ProductImage({ product, className = "h-12 w-12" }) {
-  const src = product.imageUrl
-    ? `${import.meta.env.VITE_API_URL}${product.imageUrl}`
-    : product.image;
+  const imagePath = product.imageUrl || product.image;
+  const API_URL = import.meta.env.VITE_API_URL || "";
 
   const src = imagePath
     ? imagePath.startsWith("http")
       ? imagePath
       : `${API_URL}${imagePath}`
     : null;
+
   return src ? (
     <img
       src={src}
       alt={product.name}
       loading="lazy"
       className={`${className} shrink-0 rounded border border-border object-cover`}
+      onError={(e) => {
+        e.currentTarget.style.display = "none";
+      }}
     />
   ) : (
     <div
